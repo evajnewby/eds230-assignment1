@@ -7,6 +7,10 @@ editor_options:
   chunk_output_type: console
 ---
 
+## Overview
+
+For this assignment we'll be using the Lobell et al. (2006) almond statistical yield model. We will use this model to compute the maximum, minimum and mean yield anomalies (ton/acre) given the average minimum temperature in February (ºC) and total precipitation in January (mm).
+
 ## Diagram of Almond Yield Anomaly Model
 
 ![](conceptual_almond_yield.png)
