@@ -1,0 +1,125 @@
+---
+title: "Informal Sensitivity Analysis- Almonds"
+author: "Josephine Cardelle and Eva Newby"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+# Load libraries
+library(tidyverse)
+library(here)
+```
+
+```{r}
+# Source functions
+source(here("profit_anomaly_combined.R"))
+source(here("almond_profit.R"))
+source(here("almond_yield_function.R"))
+```
+
+```{r}
+# Read in data
+climate <- read.table(here("data/clim.txt"), header = TRUE)
+```
+
+```{r}
+# Filter to january and february data
+feb <- climate[climate$month == 2,]
+jan <- climate[climate$month ==1,]
+
+# Create dataframe with mean min feb temps
+feb_tmin_df <- feb %>% 
+  group_by(year) %>% 
+  summarize(feb_tmin_mean = mean(tmin_c))
+
+# Create dataframe with total jan precips
+jan_precip_df <- jan %>% 
+  group_by(year) %>% 
+  summarize(jan_tot_precip = sum(precip))
+
+# Change to vectors
+feb_min_temp <- feb_tmin_df$feb_tmin_mean
+jan_precip <- jan_precip_df$jan_tot_precip
+```
+
+```{r}
+# Run the model using default parameters
+result <- almond_yield_profit(
+  feb_min_temp = feb_min_temp,
+  jan_precip = jan_precip
+)
+
+# Display results
+result$yield_anomalies$mean_yield_anomaly
+result$profits$mean_profit
+result
+```
+
+```{r}
+# Create parameter ranges
+price_values <- seq(4000, 6000, by = 500)
+cost_values <- seq(1500, 2500, by = 250)
+
+# Create a function to run the model with different parameters
+run_with_params <- function(price, cost) {
+  # Use consistent climate data for this analysis
+  result <- almond_yield_profit(
+    feb_min_temp = feb_min_temp,  # Using the same climate values
+    jan_precip = jan_precip,
+    almond_price_per_ton = price,
+    cost_per_acre = cost
+  )
+  
+  return(data.frame(
+    price = price,
+    cost = cost,
+    yield_anomaly = result$yield_anomalies$mean_yield_anomaly,
+    profit = result$profits$mean_profit
+  ))
+}
+
+# Generate all combinations of parameters
+params <- expand.grid(
+  price = price_values,
+  cost = cost_values
+)
+
+# Run the model for each parameter combination
+sensitivity_results <- pmap_dfr(params, function(price, cost) {
+  run_with_params(price, cost)
+})
+
+# View sample of results
+head(sensitivity_results)
+```
+
+
+```{r}
+# Create parameter combinations for sensitivity analysis
+sensitivity_data <- expand_grid(
+  almond_price_per_ton = seq(4000, 6000, by = 500),
+  cost_per_acre = seq(1500, 2500, by = 250)
+)
+
+# Run the model for each parameter combination using pmap
+sensitivity_results <- sensitivity_data %>%
+  mutate(result = pmap(list(almond_price_per_ton, cost_per_acre), 
+                      ~almond_yield_profit(
+                          feb_min_temp = feb_min_temp,
+                          jan_precip = jan_precip,
+                          almond_price_per_ton = ..1,
+                          cost_per_acre = ..2
+                        ))) %>%
+  mutate(
+    yield_anomaly = map_dbl(result, ~.$yield_anomalies$mean_yield_anomaly),
+    profit = map_dbl(result, ~.$profits$mean_profit)
+  ) %>%
+  select(-result)
+
+# View the results
+head(sensitivity_results)
+```
+
+
