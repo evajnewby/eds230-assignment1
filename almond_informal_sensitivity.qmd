@@ -75,8 +75,6 @@ price <- runif(min = base_price - deviation * base_price,
 baseline_yield <- runif(min = base_yield - deviation * base_yield, 
                         max = base_yield + deviation * base_yield, 
                         n = nsamples)
-# Create parameter dataframe
-parms <- cbind.data.frame(baseline_yield, price)
 
 # Get yield anomalies
 yieldanomaly <- almond_yield(feb_min_temp, jan_precip)
