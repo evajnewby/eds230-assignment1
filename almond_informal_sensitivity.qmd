@@ -112,4 +112,12 @@ sens_plot2
 
 ```
 
+## Model Interpretation and Sensitivity Analysis Summary
+
+The model results suggest that profit is highly sensitive to changes in the price per ton, as evidenced by the strong and nearly linear relationship displayed in the first plot. This clear trend indicates that as the price per ton increases, profit per acre rises proportionally, underscoring the direct and significant influence of market price on financial outcomes. Even relatively small fluctuations in price can lead to substantial changes in profitability, making price a critical component for both short-term financial planning and long-term business strategy.
+
+In contrast, the second plot shows a much weaker and more scattered relationship between baseline yield and profit. The lack of a clear pattern suggests that variations in baseline yield — within the range studied — do not substantially alter profit outcomes. This implies that, under the model assumptions, other factors (such as operational costs, external price shocks, or input expenses) may buffer the effect of yield variability, or that the yield range itself is too narrow to drive meaningful differences in profit.
+
+Taken together, the sensitivity analysis highlights that market price is the primary driver of profit, while baseline yield has a relatively minor impact within the observed conditions. This finding emphasizes the importance of focusing on market price dynamics, price risk management, and strategic sales timing in order to optimize profitability, rather than relying solely on yield improvements or agronomic adjustments.
+
 
