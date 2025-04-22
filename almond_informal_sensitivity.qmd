@@ -10,6 +10,7 @@ editor_options:
 # Load libraries
 library(tidyverse)
 library(here)
+library(purrr)
 ```
 
 ```{r}
@@ -57,69 +58,60 @@ result$profits$mean_profit
 result
 ```
 
+## Informal Sensitivity Analysis
 ```{r}
-# Create parameter ranges
-price_values <- seq(4000, 6000, by = 500)
-cost_values <- seq(1500, 2500, by = 250)
+# Assume a uniform distribution of 150 samples
+nsamples <- 150
+deviation <- 0.10
+base_price <- 3400
+base_yield <- 0.5
 
-# Create a function to run the model with different parameters
-run_with_params <- function(price, cost) {
-  # Use consistent climate data for this analysis
-  result <- almond_yield_profit(
-    feb_min_temp = feb_min_temp,  # Using the same climate values
-    jan_precip = jan_precip,
-    almond_price_per_ton = price,
-    cost_per_acre = cost
+# Create price test values
+price <- runif(min = base_price - deviation * base_price, 
+               max = base_price + deviation * base_price, 
+               n = nsamples)
+
+# Create baseline yield test values
+baseline_yield <- runif(min = base_yield - deviation * base_yield, 
+                        max = base_yield + deviation * base_yield, 
+                        n = nsamples)
+# Create parameter dataframe
+parms <- cbind.data.frame(baseline_yield, price)
+
+# Get yield anomalies
+yieldanomaly <- almond_yield(feb_min_temp, jan_precip)
+
+# Create a data frame to store results
+profit_df <- data.frame(
+  baseline_yield = baseline_yield,
+  price = price,
+  profit = numeric(nsamples)
+)
+# Apply the profit calculation for each parameter set
+for (i in 1:nsamples) {
+  profit_df$profit[i] <- almond_profit(
+    yield_anomaly = yieldanomaly$mean_yield_anomaly[1],
+    baseline_yield = baseline_yield[i],
+    almond_price = price[i]
   )
-  
-  return(data.frame(
-    price = price,
-    cost = cost,
-    yield_anomaly = result$yield_anomalies$mean_yield_anomaly,
-    profit = result$profits$mean_profit
-  ))
 }
+# Plot price sensitivity
+sens_plot <- ggplot(data = profit_df, aes(x = price, y = profit)) +
+  geom_point() +
+  labs(y = "Profit (dollar/acre)", 
+       x = "Price (dollar/ton)") +
+  theme_classic()
 
-# Generate all combinations of parameters
-params <- expand.grid(
-  price = price_values,
-  cost = cost_values
-)
+sens_plot2 <- ggplot(data = profit_df, aes(x = baseline_yield, y = profit)) +
+  geom_point() +
+  labs(y = "Profit (dollar/acre)", 
+       x = "Baseline Yield (ton/acre)") +
+  theme_classic()
 
-# Run the model for each parameter combination
-sensitivity_results <- pmap_dfr(params, function(price, cost) {
-  run_with_params(price, cost)
-})
+sens_plot
 
-# View sample of results
-head(sensitivity_results)
-```
+sens_plot2
 
-
-```{r}
-# Create parameter combinations for sensitivity analysis
-sensitivity_data <- expand_grid(
-  almond_price_per_ton = seq(4000, 6000, by = 500),
-  cost_per_acre = seq(1500, 2500, by = 250)
-)
-
-# Run the model for each parameter combination using pmap
-sensitivity_results <- sensitivity_data %>%
-  mutate(result = pmap(list(almond_price_per_ton, cost_per_acre), 
-                      ~almond_yield_profit(
-                          feb_min_temp = feb_min_temp,
-                          jan_precip = jan_precip,
-                          almond_price_per_ton = ..1,
-                          cost_per_acre = ..2
-                        ))) %>%
-  mutate(
-    yield_anomaly = map_dbl(result, ~.$yield_anomalies$mean_yield_anomaly),
-    profit = map_dbl(result, ~.$profits$mean_profit)
-  ) %>%
-  select(-result)
-
-# View the results
-head(sensitivity_results)
 ```
 
 
